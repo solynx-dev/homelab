@@ -8,7 +8,7 @@ This folder contains both docker-compose files for Jellyfin.
   - [Jellyfin](/media/jellyfin/)
     - [The Differences](#the-differences)
     - [Proxmox Unprivileged LXC Hardware Acceleration](#proxmox-unprivileged-lxc-hardware-acceleration)
-    - [iOS Apps](#ios-apps)
+    - [Client Apps](#client-apps)
     - [Plugins](#plugins)
     - [Transcoding](#transcoding)
 - [Remote Access](/access/)
@@ -77,48 +77,45 @@ You may need to install VAAPI drivers:
 apt install vainfo intel-media-va-driver-non-free
 ```
 
-# iOS Apps
+# Client Apps
 
-This is just a short list of the ios apps i use for watching jellyfin on my phone or on the go.
+This is a short list of the apps I use for watching Jellyfin — on my iPhone, on Apple TV, and on the go.
 
 
-### Primary App: Streamyfin
+### Primary App: Infuse
+
+**Developer:** Firecore
+**Platforms:** Apple TV, iPhone, iPad (also Mac)
+**Source:** [firecore.com/infuse](https://firecore.com/infuse)
+
+Infuse is my go-to Jellyfin client on both Apple TV and iPhone. It’s easily the best experience I’ve used — a gorgeous UI paired with incredibly smooth playback. What sets it apart:
+
+- Clean, intuitive interface with rich artwork and metadata
+- Intelligent buffering — it reads ahead while you watch, so scrubbing and seeking stay clean and instant
+- Direct Play / direct streaming of a huge range of formats (MKV, MP4, HEVC, etc.) without server-side transcoding — cleaner playback and less load on the server
+- One consistent experience across Apple TV, iPhone, and iPad
+
+Infuse handles the vast majority of my viewing. The mix of a polished UI and buttery-smooth scrubbing makes it my daily driver. Note: Infuse Pro (a small yearly subscription) is required for remote streaming from Jellyfin, which is well worth it for out-of-network access.
+
+
+### Backup App: Streamyfin
 
 **Developer:** Streamyfin
 **Source:** [GitHub](https://github.com/streamyfin/streamyfin)
 
-Streamyfin is my go-to iOS Jellyfin client. It’s fast, actively developed and packed with features, including:
-  
-  •	Native integration with Jellyseerr for seamless media requests
-  
-  •	Support for the Skip Intro plugin
-	
-  •	Clean and intuitive mobile-first UI
-	
-  •	Frequent updates and improvements
+Streamyfin is a fast, actively developed open-source Jellyfin client that I keep as my backup:
 
-This app strikes the perfect balance between usability and power, making it ideal for daily use.
+- Native integration with Jellyseerr for seamless media requests
+- Support for the Skip Intro plugin
+- Clean, mobile-first UI
+- Frequent updates and improvements
 
-
-### Backup App: Swiftfin
-
-**Developer:** jellyfin
-**Source:** [GitHub](https://github.com/jellyfin/Swiftfin)
-
-While more minimal, it’s reliable and stable, essentially offering:
-  
-  •	A native iOS experience built on top of Jellyfin’s web interface
-  
-  •	Smooth playback and navigation
-  
-  •	Fewer dependencies, good fallback when Streamyfin has issues
-
-I keep Swiftfin installed as a fallback option. It’s simple, clean, and gets the job done when needed.
+I keep Streamyfin installed as a solid, Jellyfin-native fallback for when I want something more tightly integrated with the server, or if Infuse ever isn’t the right fit.
 
 
 ### Why This Matters
 
-Having multiple clients ensures I can enjoy my media with minimal interruption, no matter what. Streamyfin handles 95% of my usage, while Swiftfin is there to back me up.
+Having multiple clients ensures I can enjoy my media with minimal interruption, no matter what. Infuse handles about 95% of my usage, while Streamyfin is there to back me up.
 
 
 # Plugins
@@ -167,7 +164,7 @@ Decoding for:
 
 ✅ VP9 10bit
 
-----
+-—
 
 **Hardware Encoding:** Enabled
 
@@ -178,6 +175,6 @@ Decoding for:
 **Transcoding thread count:** Auto
 
 ### Throttle Transcodes: Enabled
-Throttle Transcodes is really useful as you will buffer alot less. Basically without it, Jellyfin will transcode the entire media file while watching which is not ideal but having it enabled will only transcode near where you're watching and not stressing itself trying to get ahead.
+Throttle Transcodes is really useful as you will buffer alot less. Basically without it, Jellyfin will transcode the entire media file while watching which is not ideal but having it enabled will only transcode near where you’re watching and not stressing itself trying to get ahead.
 
-I recommend Throttling Transcodes, you can test if it's better or worse for you.
+I recommend Throttling Transcodes, you can test if it’s better or worse for you.
