@@ -74,6 +74,7 @@ services:
   qui:
     image: ghcr.io/autobrr/qui:latest
     container_name: qui
+    profiles: ["torrents"]
     # user: "568:568"
     restart: unless-stopped
     networks:
@@ -87,8 +88,8 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
-    # profiles: ["torrents"]
-    # network_mode: service:gluetun
+    profiles: ["torrents"]
+    network_mode: service:gluetun
     ports:
       - 8082:8080
     networks:
