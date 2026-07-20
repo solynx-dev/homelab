@@ -1,0 +1,312 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest  # Fixed typo in image name (qmcqaw → qmcgaw)
+    profiles: ["torrents"]
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun # If running proxmox see readme for more info.
+    env_file:
+      - .env
+    #ports:
+      #- "8081:8081" # qbittorrent web interface
+      #- "8080:8080" # sabnzbd web interface
+      #- "9696:9696" # prowlarr
+      - "10000:65535"
+    volumes:
+      - ./gluetun:/gluetun
+    healthcheck:
+      test: ping -c 1 www.google.com || exit 1
+      interval: 60s
+      timeout: 20s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      media-net:
+        aliases:
+          - prowlarr
+          - qbittorrent
+          - sabnzbd
+
+  deunhealth:
+    image: qmcgaw/deunhealth:latest
+    container_name: deunhealth
+    network_mode: "none"
+    environment:
+      - LOG_LEVEL=info
+      - HEALTH_SERVER_ADDRESS=127.0.0.1:9999
+      - TZ=America/Halifax
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  sabnzbd:
+    image: linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    # network_mode: service:gluetun
+    labels:
+      - deunhealth.restart.on.unhealthy=true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Halifax
+    volumes:
+      - /docker/sabnzbd:/config
+      - /data:/data
+      - /downloads:/downloads
+    dns:
+      - 9.9.9.9
+      - 1.1.1.1
+    ports:
+      - 8080:8080
+    networks:
+      - media-net
+    restart: unless-stopped
+    # depends_on:
+      # - gluetun
+    healthcheck:
+        test: ping -c 1 www.google.com || exit 1
+        interval: 30s
+        retries: 3
+        start_period: 20s
+        timeout: 10s
+
+  qui:
+    image: ghcr.io/autobrr/qui:latest
+    container_name: qui
+    # user: "568:568"
+    restart: unless-stopped
+    networks:
+      - media-net
+    ports:
+      - "7476:7476"
+    volumes:
+      - /docker/qui:/config
+      - /data:/data
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    # profiles: ["torrents"]
+    # network_mode: service:gluetun
+    ports:
+      - 8082:8080
+    networks:
+      - media-net
+    labels:
+      - deunhealth.restart.on.unhealthy=true # Label added for deunhealth monito>
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Halifax
+      - WEBUI_PORT=8080
+    volumes:
+      - /docker/qbittorrent:/config
+      - /data:/data
+    #mem_limit: 512m
+    restart: unless-stopped
+    healthcheck:
+        test: ping -c 1 www.google.com || exit 1
+        interval: 60s
+        retries: 3
+        start_period: 20s
+        timeout: 10s
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    labels:
+      - deunhealth.restart.on.unhealthy=true
+    ports:
+      - 9696:9696
+    dns:
+      - 9.9.9.9
+      - 1.1.1.1
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Halifax
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /docker/prowlarr:/config
+    restart: unless-stopped
+    # network_mode: service:gluetun
+    mem_limit: 512m
+    networks:
+      - media-net
+    healthcheck:
+        test: ping -c 1 www.google.com || exit 1
+        interval: 60s
+        retries: 3
+        start_period: 20s
+        timeout: 10s
+
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    networks: [media-net]
+    restart: unless-stopped
+    ports:
+      - "1378:80"
+    volumes:
+      - /data/books/books:/audiobooks
+      - /data/books/podcasts:/podcasts
+      - /docker/audiobooks/config:/config
+      - /data/books/metadata:/metadata
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Halifax
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /docker/sonarr:/config
+      - /data:/data
+      - /downloads:/downloads
+    mem_limit: 512m
+    dns:
+      - 9.9.9.9
+    ports:
+      - 8989:8989
+    networks:
+      - media-net
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Halifax
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /docker/radarr:/config
+      - /data:/data
+      - /downloads:/downloads
+    mem_limit: 512m
+    dns:
+      - 9.9.9.9
+    ports:
+      - 7878:7878
+    networks:
+      - media-net
+
+  lidarr:
+    container_name: lidarr
+    image: lscr.io/linuxserver/lidarr:develop
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /docker/lidarr:/config
+      - /data:/data
+      - /downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Halifax
+    mem_limit: 512m
+    dns:
+      - 9.9.9.9
+    ports:
+      - 8686:8686
+    networks:
+      - media-net
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Halifax
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /docker/bazarr:/config
+      - /data:/data
+      - /downloads:/downloads
+    ports:
+      - 6767:6767
+    networks:
+      - media-net
+
+  flaresolverr:
+    # DockerHub mirror flaresolverr/flaresolverr:latest
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    profiles: ["torrents"]
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=America/Halifax
+    dns:
+      - 1.1.1.1
+    ports:
+      - 8191:8191
+    restart: unless-stopped
+    networks:
+      - media-net
+
+  profilarr:
+    image: santiagosayshey/profilarr:latest # Use :beta for early access to new >
+    container_name: profilarr
+    mem_limit: 512m
+    dns:
+      - 9.9.9.9
+    ports:
+      - 6868:6868
+    volumes:
+      - /docker/profilarr/config:/config # Replace with your actual path
+    environment:
+      - TZ=America/Halifax # Set your timezone
+    restart: unless-stopped
+    networks:
+      - media-net
+
+  newtarr:
+    image: ghcr.io/elfhosted/newtarr:v1.0.0
+    container_name: newtarr
+    restart: unless-stopped
+    ports:
+      - "9705:9705"
+    mem_limit: 512m
+    volumes:
+      - /docker/newtarr:/config
+    environment:
+      - TZ=America/Halifax
+    networks:
+      - media-net
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: seerr
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=America/Halifax
+      - PORT=5055 #optional
+    dns:
+      - 9.9.9.9
+    ports:
+      - 5055:5055
+    networks:
+      - media-net
+    mem_limit: 512m
+    volumes:
+      - /docker/jellyseerr:/app/config
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/st>
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  media-net:
+    external: true
