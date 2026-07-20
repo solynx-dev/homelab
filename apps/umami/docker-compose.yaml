@@ -5,7 +5,7 @@ services:
     ports:
       - "3200:3000"
     environment:
-      DATABASE_URL: postgresql://umami:umami_atlas5@db:5432/umami
+      DATABASE_URL: postgresql://umami:umami_pw@db:5432/umami
       DATABASE_TYPE: postgresql
       APP_SECRET: CHANGEME
       TRUST_PROXY: 1
