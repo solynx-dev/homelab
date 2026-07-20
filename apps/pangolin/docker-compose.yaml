@@ -1,0 +1,62 @@
+name: pangolin
+services:
+  pangolin:
+    image: fosrl/pangolin:latest
+    container_name: pangolin
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/"]
+      interval: "10s"
+      timeout: "10s"
+      retries: 15
+
+  gerbil:
+    image: fosrl/gerbil:latest
+    container_name: gerbil
+    restart: unless-stopped
+    networks:
+      - default
+    depends_on:
+      pangolin:
+        condition: service_healthy
+    command:
+      - --reachableAt=http://gerbil:3003
+      - --generateAndSaveKeyTo=/var/config/key
+      - --remoteConfig=http://pangolin:3001/api/v1/gerbil/get-config
+      - --reportBandwidthTo=http://pangolin:3001/api/v1/gerbil/receive-bandwidth
+    volumes:
+      - ./config/:/var/config
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    ports:
+      - 51820:51820/udp
+      - 21820:21820/udp
+      - 443:443 # Port for traefik because of the network_mode
+      - 80:80 # Port for traefik because of the network_mode
+      # - 127.0.0.1:8080:8080 # traefik dashboard
+
+  traefik:
+    image: traefik:v3.6
+    container_name: traefik
+    restart: unless-stopped
+
+    network_mode: service:gerbil # Ports appear on the gerbil service
+    environment:
+      CLOUDFLARE_DNS_API_TOKEN: "CHANGE-ME" 
+    depends_on:
+      pangolin:
+        condition: service_healthy
+    command:
+      - --configFile=/etc/traefik/traefik_config.yml
+    volumes:
+      - ./config/traefik:/etc/traefik:ro # Volume to store the Traefik configura>
+      - ./config/letsencrypt:/letsencrypt # Volume to store the Let's Encrypt ce>
+      - ./config/traefik/logs:/var/log/traefik # Volume to store Traefik logs
+
+networks:
+  default:
+    driver: bridge
+    name: pangolin
