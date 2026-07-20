@@ -10,5 +10,5 @@ services:
      - /docker/jellyfin/config:/config
      - /data:/media  # movies and shows are mounted from jellyfin during setup
     environment:
-     - JELLYFIN_PublishedServerUrl=http://example.com # change this to work in your setup. not required.
+     - JELLYFIN_PublishedServerUrl=http://jellyfin.example.com # change this to work in your setup. not required.
     restart: unless-stopped
