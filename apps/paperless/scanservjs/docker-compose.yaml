@@ -1,0 +1,12 @@
+services:
+  scanservjs:
+    image: ghcr.io/sbs20/scanservjs:latest
+    container_name: scanservjs
+    restart: unless-stopped
+    # network_mode: host
+    ports:
+      - "8078:8080"
+    volumes:
+      - /opt/docker/paperless/consume:/var/lib/scanservjs/output
+      - ./config:/etc/scanservjs
+      - ./airscan.conf:/etc/sane.d/airscan.conf:ro

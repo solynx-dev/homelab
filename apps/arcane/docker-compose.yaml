@@ -1,0 +1,29 @@
+services:
+  arcane:
+    image: ghcr.io/getarcaneapp/manager:latest
+    container_name: arcane
+    restart: unless-stopped
+    ports:
+      - "3552:3552"          
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - arcane-data:/app/data
+      # identical host:container paths -- required for path resolution
+      - /opt/docker:/opt/docker
+      - /root/compose:/root/compose
+    environment:
+      - APP_URL=https://arcane.example.com   # must match how you actually reach >
+      - PROJECTS_DIRECTORY=/opt/docker
+      - TZ=America/Halifax
+      - ENCRYPTION_KEY=<replace>
+      - JWT_SECRET=<replace>
+      # - PUID=0
+      # - PGID=0
+    healthcheck:
+      test: ["CMD", "/app/arcane", "health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  arcane-data:

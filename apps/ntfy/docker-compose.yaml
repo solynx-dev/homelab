@@ -1,0 +1,25 @@
+services:
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: ntfy
+    command: serve
+    environment:
+      # Note: $ is doubled to $$ for docker-compose
+      NTFY_BASE_URL: "https://ntfy.example.com"
+      NTFY_BEHIND_PROXY: "true"
+      NTFY_AUTH_FILE: "/var/lib/ntfy/auth.db"
+      NTFY_ENABLE_LOGIN: "true"
+      NTFY_REQUIRE_LOGIN: "true"
+      NTFY_AUTH_DEFAULT_ACCESS: "deny-all"
+      NTFY_ATTACHMENT_CACHE_DIR: "/var/cache/ntfy/attachments"
+      NTFY_CACHE_FILE: "/var/cache/ntfy/cache.db"
+      NTFY_UPSTREAM_BASE_URL: "https://ntfy.sh"
+      # NTFY_AUTH_USERS: "user:pw"
+    volumes:
+      - /var/cache/ntfy:/var/cache/ntfy
+      - /var/cache/ntfy/attachments:/var/cache/ntfy/attachments
+      - /var/lib/ntfy:/var/lib/ntfy
+    ports:
+      - "8010:80"
+    restart: unless-stopped
+    mem_limit: 256m

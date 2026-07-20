@@ -1,0 +1,11 @@
+services:
+  beszel:
+    image: henrygd/beszel:latest
+    container_name: beszel
+    restart: unless-stopped
+    environment:
+      - APP_URL=https://beszel.example.com
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./beszel_data:/beszel_data

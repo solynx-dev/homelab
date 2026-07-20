@@ -1,0 +1,18 @@
+services:
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: npm
+    restart: unless-stopped
+    # ports:
+      # - "0.0.0.0:80:80"
+      # - "[::]:80:80"
+      # - "0.0.0.0:443:443"
+      # - "[::]:443:443"
+      # - "10.0.0.x:81:81"
+    network_mode: host   # this is for forwarding IP in my specific setup. this can be commented or removed and assigned a normal 443:443 port
+    environment:
+      TZ: America/Halifax
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    mem_limit: 256m

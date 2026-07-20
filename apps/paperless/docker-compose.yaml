@@ -1,0 +1,84 @@
+services:
+  redis:
+    image: docker.io/library/redis:8
+    container_name: paperless-redis
+    restart: unless-stopped
+
+  db:
+    image: docker.io/library/postgres:17
+    container_name: paperless-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: paperlessdbpw
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8
+    container_name: paperless-gotenberg
+    restart: unless-stopped
+    command:
+      - gotenberg
+      - --chromium-disable-javascript=true
+      - --chromium-allow-list=file:///tmp/.*
+
+  tika:
+    image: docker.io/apache/tika:3.2.1.0
+    container_name: paperless-tika
+    restart: unless-stopped
+ 
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+      - gotenberg
+      - tika
+
+    ports:
+      - "8008:8000"
+
+    environment:
+      PAPERLESS_REDIS: redis://redis:6379
+
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS: paperlessdbpw
+
+      PAPERLESS_URL: https://paperless.example.com
+
+      PAPERLESS_SECRET_KEY: CHANGE-ME
+
+      PAPERLESS_TIME_ZONE: America/Halifax
+
+      PAPERLESS_OCR_LANGUAGE: eng
+      PAPERLESS_OCR_LANGUAGES: eng fra
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+
+      PAPERLESS_CONSUMER_POLLING: 30
+
+    volumes:
+      - ./data:/usr/src/paperless/data
+      - ./media:/usr/src/paperless/media
+      - ./export:/usr/src/paperless/export
+      - ./consume:/usr/src/paperless/consume
+
+  paperless-ai:
+    image: clusterzx/paperless-ai:latest
+    container_name: paperless-ai
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - PAPERLESS_AI_PORT=3000
+    ports:
+      - "3078:3000"
+    volumes:
+      - ./paperless-ai-data:/app/data
